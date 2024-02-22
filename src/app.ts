@@ -1,3 +1,5 @@
+// Where we put our business logic.
+
 export type AppRequest = {
     ip: string;
 };
@@ -7,7 +9,7 @@ export type AppResponse = {
     obj: Record<string, unknown>;
 };
 
-export function handleRootRequest(req: AppRequest): AppResponse {
+export async function handleRootRequest(req: AppRequest): Promise<AppResponse> {
     console.log(req.ip);
     const res: AppResponse = {
         status: 200,
