@@ -10,8 +10,8 @@ export type AppResponse = {
 export function handleRootRequest(req: AppRequest): AppResponse {
     console.log(req.ip);
     const res: AppResponse = {
-        status: 429,
-        obj: { message: "limited" },
+        status: 200,
+        obj: { message: "hi there" },
     };
     return res;
 }

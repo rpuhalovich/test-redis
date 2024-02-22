@@ -9,7 +9,12 @@ fi
 
 if [[ $1 == "root" ]]; then
     for i in $(seq 1 5); do
-        curl $FQDN/?msg=hi
+        curl -v $FQDN/?msg=hi
     done
+    exit 0
+fi
+
+if [[ $1 == "health" ]]; then
+    curl -v $FQDN/health
     exit 0
 fi
