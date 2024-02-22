@@ -12,5 +12,8 @@ cp .env.example .env
 npm run start:cache
 
 # run express server
-npm run start:cache
+npm run start
+
+# run test script
+./test.sh root
 ```

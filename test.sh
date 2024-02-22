@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 FQDN=localhost:3000
 
@@ -9,12 +9,11 @@ fi
 
 if [[ $1 == "root" ]]; then
     for i in $(seq 1 10); do
-        curl $FQDN/?msg=hi&there=hello
+        curl -w "\n" $FQDN/?msg=hi&there=hello
+        sleep 0.1
     done
-    exit 0
 fi
 
 if [[ $1 == "health" ]]; then
-    curl $FQDN/health
-    exit 0
+    curl -w "\n" $FQDN/health
 fi

@@ -34,7 +34,7 @@ export function handler(
     return async (req: Request, res: Response): Promise<void> => {
         try {
             if (!req.ip) {
-                res.status(400).send("bad request\n");
+                res.status(400).send("bad request");
                 return;
             }
 
@@ -56,7 +56,7 @@ export function handler(
             );
 
             if (isLimited && !overrideRateLimit) {
-                res.status(429).send("rate limit exceeded\n");
+                res.status(429).send("rate limit exceeded");
                 return;
             }
 
