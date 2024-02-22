@@ -5,14 +5,12 @@
 ```bash
 npm i
 
-# insert .env template as shown below
-touch .env
-```
+# copy then fill out .env
+cp .env.example .env
 
-### .env template
+# start redis in one terminal
+npm run start:cache
 
-```
-# redis
-REDIS=
-``
+# run express server
+npm run start:cache
 ```
