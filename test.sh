@@ -8,13 +8,13 @@ if [[ $1 == "" ]]; then
 fi
 
 if [[ $1 == "root" ]]; then
-    for i in $(seq 1 5); do
-        curl -v $FQDN/?msg=hi
+    for i in $(seq 1 10); do
+        curl $FQDN/?msg=hi
     done
     exit 0
 fi
 
 if [[ $1 == "health" ]]; then
-    curl -v $FQDN/health
+    curl $FQDN/health
     exit 0
 fi
