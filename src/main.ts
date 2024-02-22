@@ -13,16 +13,13 @@ const app = require("express")();
 const port = 3000;
 
 // using sliding log
-async function rateLimit(ip: string): Promise<boolean> {
-    const pastTime = new Date();
-    pastTime.setHours(pastTime.getHours() - 1); // TODO: make time configrable
-    await rc.zRemRangeByScore(ip, "-inf", pastTime.getTime());
+async function rateLimit(ip: string, maxRequests: number, curTime: number, pastTime: number): Promise<boolean> {
+    console.log({ maxRequests, curTime, pastTime });
 
-    const curTime: number = Date.now();
+    await rc.zRemRangeByScore(ip, "-inf", pastTime);
     await rc.zAdd(ip, { score: curTime, value: `${curTime}` });
-
     const count = await rc.zCount(ip, "-inf", "inf");
-    if (count > 20) return true; // TODO: make rate configurable
+    if (count > maxRequests) return true;
     return false;
 }
 
@@ -33,7 +30,20 @@ app.get("/", async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        const isLimited: boolean = await rateLimit(req.ip);
+        const RATE_LIMIT_MINUTES = 60;
+        const RATE_LIMIT_MAX_REQUESTS = 10;
+
+        const pastTime = new Date();
+        pastTime.setMinutes(pastTime.getMinutes() - RATE_LIMIT_MINUTES);
+        const pastTimeMilliseconds: number = pastTime.getTime();
+        const curTimeMilliseconds: number = Date.now();
+        const isLimited: boolean = await rateLimit(
+            req.ip,
+            RATE_LIMIT_MAX_REQUESTS,
+            curTimeMilliseconds,
+            pastTimeMilliseconds,
+        );
+
         if (isLimited) {
             res.status(429).send("rate limit exceeded\n");
             return;
