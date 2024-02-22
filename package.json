@@ -1,0 +1,26 @@
+{
+    "scripts": {
+        "start": "ts-node ./src/main.ts",
+        "start:cache": "echo TODO",
+        "watch": "nodemon --exec \"ts-node\" ./src/main.ts",
+        "test": "jest",
+        "format": "prettier --write ."
+    },
+    "dependencies": {
+        "@types/express": "^4.17.21",
+        "dotenv": "^16.4.5",
+        "express": "^4.18.2",
+        "redis": "^4.6.13",
+        "ts-node": "^10.9.2"
+    },
+    "devDependencies": {
+        "@types/jest": "^29.5.12",
+        "jest": "^29.7.0",
+        "nodemon": "^3.0.3",
+        "prettier": "^3.2.5"
+    },
+    "prettier": {
+        "printWidth": 120,
+        "tabWidth": 4
+    }
+}
