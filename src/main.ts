@@ -27,6 +27,7 @@ function handler(
     rateLimitProvider: (ip: string, maxRequests: number, curTime: number, pastTime: number) => Promise<boolean>,
     tempLimitProvider: (queryParams: Record<any, unknown>) => Promise<boolean>,
     authProvider: (token: string | undefined) => Promise<boolean>,
+    timeProvider: () => number,
     cb: (request: AppRequest) => Promise<AppResponse>,
     rateLimitMinutes: number,
     rateLimitMaxRequests: number,
@@ -46,15 +47,13 @@ function handler(
             const overrideRateLimit: boolean = await tempLimitProvider(req.query);
 
             // rate limit
-            const pastTime = new Date();
-            pastTime.setMinutes(pastTime.getMinutes() - rateLimitMinutes);
-            const pastTimeMilliseconds: number = pastTime.getTime();
-            const curTimeMilliseconds: number = Date.now();
+            const curTime = timeProvider();
+            const MINUTE_IN_MILLISECONDS = 60000;
             const isLimited: boolean = await rateLimitProvider(
                 req.ip,
                 authenticated ? authRateLimitMaxRequests : rateLimitMaxRequests,
-                curTimeMilliseconds,
-                pastTimeMilliseconds,
+                curTime,
+                curTime - rateLimitMinutes * MINUTE_IN_MILLISECONDS,
             );
 
             if (isLimited && !overrideRateLimit) {
@@ -83,10 +82,13 @@ async function rateLimit(ip: string, maxRequests: number, curTime: number, pastT
     return count > maxRequests;
 }
 
+// Implement logic for special events based on query params
 const tempLimit = async (queryParams: Record<any, unknown>): Promise<boolean> => false;
+
+// Implement auth logic based on given token
 const auth = async (token: string | undefined): Promise<boolean> => false;
 
-app.get("/", handler(rateLimit, tempLimit, auth, handleRootRequest, 1, 10, 20));
+app.get("/", handler(rateLimit, tempLimit, auth, Date.now, handleRootRequest, 1, 10, 20));
 
 app.get(
     "/health",
@@ -94,6 +96,7 @@ app.get(
         rateLimit,
         tempLimit,
         auth,
+        Date.now,
         async (req: AppRequest): Promise<AppResponse> => {
             return { status: 200, obj: { message: "success" } };
         },

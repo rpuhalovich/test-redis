@@ -9,7 +9,7 @@ fi
 
 if [[ $1 == "root" ]]; then
     for i in $(seq 1 10); do
-        curl $FQDN/?msg=hi
+        curl $FQDN/?msg=hi&there=hello
     done
     exit 0
 fi
