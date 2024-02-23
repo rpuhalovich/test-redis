@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { AppRequest, AppResponse } from "./app";
-import { RedisClientType } from "redis";
 
 /**
  * Wraps a callback so the rate limiting can be used for every endpoint.
@@ -15,21 +14,11 @@ import { RedisClientType } from "redis";
  * @returns a callback function for express to use
  */
 export function handler(
-    rateLimitProvider: (
-        rclient: RedisClientType,
-        ip: string,
-        maxRequests: number,
-        curTime: number,
-        pastTime: number,
-    ) => Promise<boolean>,
-    tempLimitProvider: (queryParams: Record<any, unknown>) => Promise<boolean>,
-    authProvider: (token: string | undefined) => Promise<boolean>,
+    rateLimitProvider: (ip: string, maxRequests: number, curTime: number, pastTime: number) => Promise<boolean>,
     timeProvider: () => number,
     cb: (request: AppRequest) => Promise<AppResponse>,
-    rc: RedisClientType,
     rateLimitMinutes: number,
     rateLimitMaxRequests: number,
-    authRateLimitMaxRequests: number,
 ): (req: Request, res: Response) => Promise<void> {
     return async (req: Request, res: Response): Promise<void> => {
         try {
@@ -38,24 +27,17 @@ export function handler(
                 return;
             }
 
-            // is authenticated
-            const authenticated: boolean = await authProvider(req.headers["authorization"]);
-
-            // temp limit based on query parameters
-            const overrideRateLimit: boolean = await tempLimitProvider(req.query);
-
             // rate limit
             const curTime = timeProvider();
             const MINUTE_IN_MILLISECONDS = 60000;
             const isLimited: boolean = await rateLimitProvider(
-                rc,
                 req.ip,
-                authenticated ? authRateLimitMaxRequests : rateLimitMaxRequests,
+                rateLimitMaxRequests,
                 curTime,
                 curTime - rateLimitMinutes * MINUTE_IN_MILLISECONDS,
             );
 
-            if (isLimited && !overrideRateLimit) {
+            if (isLimited) {
                 res.status(429).send("rate limit exceeded");
                 return;
             }

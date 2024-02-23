@@ -1,5 +1,3 @@
-// Where we put our business logic.
-
 export type AppRequest = {
     ip: string;
 };
@@ -15,4 +13,8 @@ export async function handleRootRequest(req: AppRequest): Promise<AppResponse> {
         obj: { message: "hi there" },
     };
     return res;
+}
+
+export async function handleHealthRequest(req: AppRequest): Promise<AppResponse> {
+    return { status: 200, obj: { message: "success" } };
 }

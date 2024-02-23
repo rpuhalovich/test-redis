@@ -13,6 +13,6 @@ export async function rateLimit(
 ): Promise<boolean> {
     await rc.zRemRangeByScore(ip, "-inf", pastTime);
     await rc.zAdd(ip, { score: curTime, value: `${curTime}` });
-    const count = await rc.zCount(ip, "-inf", "inf");
+    const count: number = await rc.zCount(ip, "-inf", "inf");
     return count > maxRequests;
 }
