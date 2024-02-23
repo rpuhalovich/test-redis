@@ -1,7 +1,10 @@
 import { RedisClientType } from "redis";
 
 /**
- * using sliding log
+ * reference: https://bhargav-journal.blogspot.com/2020/12/understanding-rate-limiting-algorithms.html
+ * Using the sliding log algorithm
+ * @param curTime current time
+ * @param pastTime time to cut off
  * @returns true if request should be rate limited
  */
 export async function rateLimit(

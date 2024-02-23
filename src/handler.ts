@@ -14,7 +14,7 @@ import { AppRequest, AppResponse } from "./app";
  * @returns a callback function for express to use
  */
 export function handler(
-    cb: (request: AppRequest) => Promise<AppResponse>,
+    callback: (request: AppRequest) => Promise<AppResponse>,
     {
         rateLimitProvider,
         timeProvider,
@@ -50,7 +50,7 @@ export function handler(
             }
 
             // run cb functionality
-            const ans: AppResponse = await cb({ ip: req.ip });
+            const ans: AppResponse = await callback({ ip: req.ip });
             res.status(ans.status).send(ans.obj);
         } catch (error: unknown) {
             const e = error as Error;

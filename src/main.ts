@@ -27,6 +27,7 @@ app.get(
         rateLimitMaxRequests: envnum(process.env.ROOT_RATE_LIMIT_MAX_REQUESTS),
     }),
 );
+
 app.get(
     "/health",
     handler(handleHealthRequest, {
