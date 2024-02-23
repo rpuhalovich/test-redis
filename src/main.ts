@@ -5,7 +5,7 @@ import { rateLimit } from "./redis";
 
 const rc: RedisClientType = createClient();
 rc.connect();
-rc.on("error", (err) => console.log("Redis Client Error", err));
+rc.on("error", (err) => console.log("redis client error", err));
 
 require("dotenv").config();
 
@@ -16,6 +16,25 @@ const rateLimitProvider = (ip: string, maxRequests: number, curTime: number, pas
     return rateLimit(rc, ip, maxRequests, curTime, pastTime);
 };
 
-app.get("/", handler(rateLimitProvider, Date.now, handleRootRequest, 1, 10));
-app.get("/health", handler(rateLimitProvider, Date.now, handleHealthRequest, 1, 10));
+const envnum = (val: string | undefined) => (val ? Number(val) : 0);
+
+app.get(
+    "/",
+    handler(handleRootRequest, {
+        rateLimitProvider,
+        timeProvider: Date.now,
+        rateLimitMinutes: envnum(process.env.ROOT_RATE_LIMIT_MINUTES),
+        rateLimitMaxRequests: envnum(process.env.ROOT_RATE_LIMIT_MAX_REQUESTS),
+    }),
+);
+app.get(
+    "/health",
+    handler(handleHealthRequest, {
+        rateLimitProvider,
+        timeProvider: Date.now,
+        rateLimitMinutes: envnum(process.env.HEALTH_RATE_LIMIT_MINUTES),
+        rateLimitMaxRequests: envnum(process.env.HEALTH_RATE_LIMIT_MAX_REQUESTS),
+    }),
+);
+
 app.listen(port, () => console.log(`listening on port ${port}`));

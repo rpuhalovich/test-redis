@@ -4,7 +4,6 @@ FQDN=localhost:3000
 
 if [[ $1 == "" ]]; then
     echo nothing done
-    exit 0
 fi
 
 if [[ $1 == "root" ]]; then

@@ -10,7 +10,7 @@ export type AppResponse = {
 export async function handleRootRequest(req: AppRequest): Promise<AppResponse> {
     const res: AppResponse = {
         status: 200,
-        obj: { message: "hi there" },
+        obj: { message: "success" },
     };
     return res;
 }

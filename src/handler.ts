@@ -14,11 +14,18 @@ import { AppRequest, AppResponse } from "./app";
  * @returns a callback function for express to use
  */
 export function handler(
-    rateLimitProvider: (ip: string, maxRequests: number, curTime: number, pastTime: number) => Promise<boolean>,
-    timeProvider: () => number,
     cb: (request: AppRequest) => Promise<AppResponse>,
-    rateLimitMinutes: number,
-    rateLimitMaxRequests: number,
+    {
+        rateLimitProvider,
+        timeProvider,
+        rateLimitMinutes,
+        rateLimitMaxRequests,
+    }: {
+        rateLimitProvider: (ip: string, maxRequests: number, curTime: number, pastTime: number) => Promise<boolean>;
+        timeProvider: () => number;
+        rateLimitMinutes: number;
+        rateLimitMaxRequests: number;
+    },
 ): (req: Request, res: Response) => Promise<void> {
     return async (req: Request, res: Response): Promise<void> => {
         try {
@@ -28,7 +35,7 @@ export function handler(
             }
 
             // rate limit
-            const curTime = timeProvider();
+            const curTime: number = timeProvider();
             const MINUTE_IN_MILLISECONDS = 60000;
             const isLimited: boolean = await rateLimitProvider(
                 req.ip,
