@@ -16,4 +16,7 @@ npm run start
 
 # run test script
 ./test.sh root
+
+# run unit tests (redis cache must be running)
+npm run test
 ```

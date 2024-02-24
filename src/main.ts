@@ -12,6 +12,14 @@ require("dotenv").config();
 const app = require("express")();
 const port = 3000;
 
+const tempOverrideProvider = async (queryParams: Record<string, any>): Promise<boolean> => {
+    return false;
+};
+
+const authProvider = async (token: string): Promise<boolean> => {
+    return false;
+};
+
 const rateLimitProvider = (ip: string, maxRequests: number, curTime: number, pastTime: number) => {
     return rateLimit(rc, ip, maxRequests, curTime, pastTime);
 };
@@ -22,9 +30,12 @@ app.get(
     "/",
     handler(handleRootRequest, {
         rateLimitProvider,
+        tempOverrideProvider,
+        authProvider,
         timeProvider: Date.now,
         rateLimitMinutes: envnum(process.env.ROOT_RATE_LIMIT_MINUTES),
         rateLimitMaxRequests: envnum(process.env.ROOT_RATE_LIMIT_MAX_REQUESTS),
+        authRateLimitMaxRequests: envnum(process.env.ROOT_AUTH_RATE_LIMIT_MAX_REQUESTS),
     }),
 );
 

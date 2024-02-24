@@ -4,12 +4,9 @@ import { AppRequest, AppResponse } from "./app";
 /**
  * Wraps a callback so the rate limiting can be used for every endpoint.
  *
- * NOTE: this is bordering on too much DI, this is just to meet the 'unit test' requirement to test specifically
- * the middleware in the real world, I would do something like an integration test that has a running in memory Redis
- *
- * NOTE: also it's very rigid if we were to change the args for the different DI providers. In the real world,
- * we would just have the handler wrapper with the only args being the callback function and an options obj that
- * would have stuff like the rateLimitMinutes, rateLimitMaxRequests and providers
+ * NOTE: There's a lot of wrapper stuff here to meet the "unit test" requirement
+ * at the top of the call stack, we would usually do something more akin to an
+ * integration test
  *
  * @returns a callback function for express to use
  */
@@ -18,43 +15,100 @@ export function handler(
     {
         rateLimitProvider,
         timeProvider,
+        authProvider,
+        tempOverrideProvider,
+        authRateLimitMaxRequests,
         rateLimitMinutes,
         rateLimitMaxRequests,
     }: {
         rateLimitProvider: (ip: string, maxRequests: number, curTime: number, pastTime: number) => Promise<boolean>;
         timeProvider: () => number;
+        authProvider?: (token: string) => Promise<boolean>;
+        tempOverrideProvider?: (queryParams: Record<string, any>) => Promise<boolean>;
+        authRateLimitMaxRequests?: number;
         rateLimitMinutes: number;
         rateLimitMaxRequests: number;
     },
 ): (req: Request, res: Response) => Promise<void> {
     return async (req: Request, res: Response): Promise<void> => {
         try {
-            if (!req.ip) {
-                res.status(400).send("bad request");
-                return;
-            }
-
-            // rate limit
-            const curTime: number = timeProvider();
-            const MINUTE_IN_MILLISECONDS = 60000;
-            const isLimited: boolean = await rateLimitProvider(
-                req.ip,
+            const appReq: AppRequest = {
+                ip: req.ip,
+                query: req.query,
+                headers: req.headers,
+            };
+            const ans: AppResponse = await processRequest({
+                req: appReq,
+                callback,
+                rateLimitProvider,
+                timeProvider,
+                authProvider,
+                tempOverrideProvider,
+                authRateLimitMaxRequests,
+                rateLimitMinutes,
                 rateLimitMaxRequests,
-                curTime,
-                curTime - rateLimitMinutes * MINUTE_IN_MILLISECONDS,
-            );
-
-            if (isLimited) {
-                res.status(429).send("rate limit exceeded");
-                return;
-            }
-
-            // run cb functionality
-            const ans: AppResponse = await callback({ ip: req.ip });
+            });
             res.status(ans.status).send(ans.obj);
         } catch (error: unknown) {
             const e = error as Error;
             res.status(500).send(`unexpected error: ${e.message}`);
         }
     };
+}
+
+export async function processRequest({
+    callback,
+    rateLimitProvider,
+    timeProvider,
+    authProvider,
+    tempOverrideProvider,
+    req,
+    authRateLimitMaxRequests,
+    rateLimitMinutes,
+    rateLimitMaxRequests,
+}: {
+    callback: (request: AppRequest) => Promise<AppResponse>;
+    rateLimitProvider: (ip: string, maxRequests: number, curTime: number, pastTime: number) => Promise<boolean>;
+    timeProvider: () => number;
+    authProvider?: (token: string) => Promise<boolean>;
+    tempOverrideProvider?: (queryParams: Record<string, any>) => Promise<boolean>;
+    req: AppRequest;
+    authRateLimitMaxRequests?: number;
+    rateLimitMinutes: number;
+    rateLimitMaxRequests: number;
+}): Promise<AppResponse> {
+    try {
+        if (!req.ip) throw new Error("BAD_REQUEST");
+
+        // auth
+        let isAuthOverride: boolean = false;
+        if (req.headers.authorization && authProvider) {
+            isAuthOverride = await authProvider(req.headers.authorization);
+        }
+
+        // rate limit
+        const curTime: number = timeProvider();
+        const MINUTE_IN_MILLISECONDS = 60000;
+        const isLimited: boolean = await rateLimitProvider(
+            req.ip,
+            isAuthOverride && authRateLimitMaxRequests ? authRateLimitMaxRequests : rateLimitMaxRequests,
+            curTime,
+            curTime - rateLimitMinutes * MINUTE_IN_MILLISECONDS,
+        );
+
+        // temp override
+        let isTempOverride: boolean = false;
+        if (req.query && tempOverrideProvider) {
+            isTempOverride = await tempOverrideProvider(req.query);
+        }
+
+        if (isLimited && !isTempOverride) throw new Error("RATE_LIMIT_EXCEEDED");
+
+        // run callback functionality
+        const ans: AppResponse = await callback(req);
+        return ans;
+    } catch (error: unknown) {
+        const e = error as Error;
+        throw e;
+    }
 }

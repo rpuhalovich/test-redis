@@ -1,5 +1,7 @@
 export type AppRequest = {
-    ip: string;
+    ip: string | undefined;
+    query: Record<string, any>;
+    headers: { authorization?: string };
 };
 
 export type AppResponse = {
@@ -8,11 +10,7 @@ export type AppResponse = {
 };
 
 export async function handleRootRequest(req: AppRequest): Promise<AppResponse> {
-    const res: AppResponse = {
-        status: 200,
-        obj: { message: "success" },
-    };
-    return res;
+    return { status: 200, obj: { message: "success" } };
 }
 
 export async function handleHealthRequest(req: AppRequest): Promise<AppResponse> {
