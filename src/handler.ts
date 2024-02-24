@@ -4,9 +4,9 @@ import { AppRequest, AppResponse } from "./app";
 /**
  * Wraps a callback so the rate limiting can be used for every endpoint.
  *
- * NOTE: There's a lot of wrapper stuff here to meet the "unit test" requirement
- * at the top of the call stack, we would usually do something more akin to an
- * integration test
+ * NOTE: There's a lot of wrapper stuff here to meet the "unit test" requirement.
+ * At the top of the call stack, we would usually do something more akin to an
+ * integration test as there's a lot of boilerplate here
  *
  * @returns a callback function for express to use
  */
@@ -51,6 +51,14 @@ export function handler(
             res.status(ans.status).send(ans.obj);
         } catch (error: unknown) {
             const e = error as Error;
+            if (e.message === "RATE_LIMIT_EXCEEDED") {
+                res.status(429).send("rate limit exceeded");
+                return;
+            }
+            if (e.message === "BAD_REQUEST") {
+                res.status(400).send("bad request");
+                return;
+            }
             res.status(500).send(`unexpected error: ${e.message}`);
         }
     };

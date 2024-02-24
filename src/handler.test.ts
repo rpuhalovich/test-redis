@@ -1,6 +1,5 @@
-import * as express from "express";
 import { AppRequest, AppResponse } from "./app";
-import { handler, processRequest } from "./handler";
+import { processRequest } from "./handler";
 
 export async function handleTest(request: AppRequest): Promise<AppResponse> {
     return { status: 200, obj: { message: "success" } };
@@ -36,5 +35,6 @@ describe("handler", () => {
         });
 
         expect(handleTestFn).toBeCalled();
+        expect(ans.obj.message).toEqual("success");
     });
 });
