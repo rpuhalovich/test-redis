@@ -36,11 +36,13 @@ describe("handler", () => {
 
     test("rate limit", async () => {
         const handleTestFn = jest.fn(handleTest);
-        const rateLimitProvider = jest.fn(
-            async (ip: string, maxRequests: number, curTime: number, pastTime: number): Promise<boolean> => {
-                return true;
-            },
-        );
+        const rateLimitProvider = async (
+            ip: string,
+            maxRequests: number,
+            curTime: number,
+            pastTime: number,
+        ): Promise<boolean> => true;
+
         const req: AppRequest = {
             ip: "::1",
             query: {},
@@ -51,11 +53,11 @@ describe("handler", () => {
             await processRequest({
                 callback: handleTestFn,
                 rateLimitProvider,
-                timeProvider: () => 20,
+                timeProvider: () => 10,
                 req,
                 rateLimitMinutes: 1,
                 rateLimitMaxRequests: 2,
             });
-        }).rejects.toThrow();
+        }).rejects.toThrow("RATE_LIMIT_EXCEEDED");
     });
 });

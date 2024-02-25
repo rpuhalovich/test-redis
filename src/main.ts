@@ -12,6 +12,10 @@ require("dotenv").config();
 const app = require("express")();
 const port = 3000;
 
+/**
+ * NOTE: Rate limit temp override from queryparams is bad. Not sure what this requirement means,
+ * where would the special requirement check come from the client?
+ */
 const tempOverrideProvider = async (queryParams: Record<string, any>): Promise<boolean> => {
     return false;
 };
