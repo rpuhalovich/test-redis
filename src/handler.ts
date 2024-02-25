@@ -85,38 +85,33 @@ export async function processRequest({
     rateLimitMinutes: number;
     rateLimitMaxRequests: number;
 }): Promise<AppResponse> {
-    try {
-        if (!req.ip) throw new Error("BAD_REQUEST");
+    if (!req.ip) throw new Error("BAD_REQUEST");
 
-        // auth
-        let isAuthOverride: boolean = false;
-        if (req.headers.authorization && authProvider) {
-            isAuthOverride = await authProvider(req.headers.authorization);
-        }
-
-        // rate limit
-        const curTime: number = timeProvider();
-        const MINUTE_IN_MILLISECONDS = 60000;
-        const isLimited: boolean = await rateLimitProvider(
-            req.ip,
-            isAuthOverride && authRateLimitMaxRequests ? authRateLimitMaxRequests : rateLimitMaxRequests,
-            curTime,
-            curTime - rateLimitMinutes * MINUTE_IN_MILLISECONDS,
-        );
-
-        // temp override
-        let isTempOverride: boolean = false;
-        if (req.query && tempOverrideProvider) {
-            isTempOverride = await tempOverrideProvider(req.query);
-        }
-
-        if (isLimited && !isTempOverride) throw new Error("RATE_LIMIT_EXCEEDED");
-
-        // run callback functionality
-        const ans: AppResponse = await callback(req);
-        return ans;
-    } catch (error: unknown) {
-        const e = error as Error;
-        throw e;
+    // auth
+    let isAuthOverride: boolean = false;
+    if (req.headers.authorization && authProvider) {
+        isAuthOverride = await authProvider(req.headers.authorization);
     }
+
+    // rate limit
+    const curTime: number = timeProvider();
+    const MINUTE_IN_MILLISECONDS = 60000;
+    const isLimited: boolean = await rateLimitProvider(
+        req.ip,
+        isAuthOverride && authRateLimitMaxRequests ? authRateLimitMaxRequests : rateLimitMaxRequests,
+        curTime,
+        curTime - rateLimitMinutes * MINUTE_IN_MILLISECONDS,
+    );
+
+    // temp override
+    let isTempOverride: boolean = false;
+    if (req.query && tempOverrideProvider) {
+        isTempOverride = await tempOverrideProvider(req.query);
+    }
+
+    if (isLimited && !isTempOverride) throw new Error("RATE_LIMIT_EXCEEDED");
+
+    // run callback functionality
+    const ans: AppResponse = await callback(req);
+    return ans;
 }

@@ -6,10 +6,6 @@ export async function handleTest(request: AppRequest): Promise<AppResponse> {
 }
 
 describe("handler", () => {
-    afterEach(async () => {
-        jest.restoreAllMocks();
-    });
-
     test("callback is called", async () => {
         const handleTestFn = jest.fn(handleTest);
         const rateLimitProvider = jest.fn(
@@ -36,5 +32,30 @@ describe("handler", () => {
 
         expect(handleTestFn).toBeCalled();
         expect(ans.obj.message).toEqual("success");
+    });
+
+    test("rate limit", async () => {
+        const handleTestFn = jest.fn(handleTest);
+        const rateLimitProvider = jest.fn(
+            async (ip: string, maxRequests: number, curTime: number, pastTime: number): Promise<boolean> => {
+                return true;
+            },
+        );
+        const req: AppRequest = {
+            ip: "::1",
+            query: {},
+            headers: {},
+        };
+
+        expect(async () => {
+            await processRequest({
+                callback: handleTestFn,
+                rateLimitProvider,
+                timeProvider: () => 20,
+                req,
+                rateLimitMinutes: 1,
+                rateLimitMaxRequests: 2,
+            });
+        }).rejects.toThrow();
     });
 });
